@@ -61,7 +61,7 @@ function list_hooks_in_dir
 	 -mindepth ${level} \
 	 -maxdepth ${level} \
 	 \( -perm -100 -o -perm -010 -o -perm -001 \) \
-	 -type f 2>/dev/null \
+	 -type fl 2>/dev/null \
 	| grep -v "^.$" | sort
 }
 
@@ -182,9 +182,12 @@ git-hooks run "$0" "$@"';
     fi
 }
 
-function install_global 
+function install_global
 {
     TEMPLATE="$HOME/.git-template-with-git-hooks"
+    if [[ -n "$1" ]]; then
+        TEMPLATE="$1"
+    fi
     if [ ! -d "${TEMPLATE}" ] ; then
         DEFAULT=/usr/share/git-core/templates
         if [ -d ${DEFAULT} ] ; then
@@ -192,8 +195,8 @@ function install_global
         else
             mkdir -p "${TEMPLATE}/hooks"
         fi
-        cmd="#!/usr/bin/env bash
-echo \"git hooks not installed in this repository.  Run 'git hooks --install' to install it or 'git hooks -h' for more information.\"";
+    cmd='#!/usr/bin/env bash
+git-hooks run "$0" "$@"';
         install_hooks_into "${TEMPLATE}" "${cmd}"
         mv "${TEMPLATE}/hooks.old" "${TEMPLATE}/hooks.original"
     fi
@@ -201,12 +204,12 @@ echo \"git hooks not installed in this repository.  Run 'git hooks --install' to
     echo "Git global config init.templatedir is now set to ${TEMPLATE}"
 }
 
-function uninstall_global 
+function uninstall_global
 {
     git config --global --unset init.templatedir
 }
 
-function report_error 
+function report_error
 {
     echo "Hook failed: $last_run_hook"
     exit 1
@@ -226,7 +229,7 @@ case $1 in
         install_hooks "$1"
         ;;
     --install-global|--installglobal )
-        install_global
+        install_global "$2"
         ;;
     --uninstall-global|--uninstallglobal )
         uninstall_global
